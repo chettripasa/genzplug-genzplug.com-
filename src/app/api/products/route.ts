@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import dbConnect from '@/lib/mongodb';
+import Product from '@/models/Product';
 
 const sampleProducts = [
   {
@@ -32,22 +34,22 @@ const sampleProducts = [
 
 export async function GET() {
   try {
-    return NextResponse.json(sampleProducts);
+    await dbConnect();
+    const products = await Product.find({}).sort({ createdAt: -1 });
+    return NextResponse.json(products);
   } catch (error) {
-    console.error('Products API error:', error);
-    return NextResponse.json([]);
+    console.error('Database connection error:', error);
+    // Return sample data if database is not available
+    return NextResponse.json(sampleProducts);
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    await dbConnect();
     const body = await request.json();
-    const newProduct = {
-      _id: Date.now().toString(),
-      ...body,
-      createdAt: new Date().toISOString()
-    };
-    return NextResponse.json(newProduct, { status: 201 });
+    const product = await Product.create(body);
+    return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error('Failed to create product:', error);
     return NextResponse.json(
