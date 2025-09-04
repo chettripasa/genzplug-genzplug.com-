@@ -9,7 +9,7 @@ import User from '@/models/User';
 import dbConnect from './mongodb';
 
 export const authOptions: NextAuthOptions = {
-  adapter: clientPromise ? MongoDBAdapter(clientPromise) : undefined,
+  adapter: undefined, // Disable adapter for now
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [
       GoogleProvider({
@@ -73,9 +73,6 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-  },
-  pages: {
-    signIn: '/auth/signin',
   },
   callbacks: {
     async session({ session, token }) {
