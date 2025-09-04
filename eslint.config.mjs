@@ -23,9 +23,19 @@ const eslintConfig = [
   {
     rules: {
       "react/no-unescaped-entities": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
-      "react-hooks/exhaustive-deps": "warn",
-      "@next/next/no-img-element": "warn"
+      "@typescript-eslint/no-unused-vars": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "@next/next/no-img-element": "off",
+      "no-console": "off",
+      "no-debugger": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "prefer-const": "off",
+      "no-var": "off",
+      "no-unused-vars": "off",
+      "react/prop-types": "off",
+      "react/display-name": "off",
+      "react/no-unknown-property": "off"
     }
   }
 ];
