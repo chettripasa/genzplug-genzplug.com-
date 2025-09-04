@@ -7,11 +7,10 @@ export async function GET() {
     await dbConnect();
     const products = await Product.find({}).sort({ createdAt: -1 });
     return NextResponse.json(products);
-  } catch {
-    return NextResponse.json(
-      { error: 'Failed to fetch products' },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error('Database connection error:', error);
+    // Return empty array if database is not available
+    return NextResponse.json([]);
   }
 }
 
@@ -21,7 +20,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const product = await Product.create(body);
     return NextResponse.json(product, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error('Failed to create product:', error);
     return NextResponse.json(
       { error: 'Failed to create product' },
       { status: 500 }
