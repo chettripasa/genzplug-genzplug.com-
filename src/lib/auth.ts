@@ -1,28 +1,8 @@
 import { NextAuthOptions } from 'next-auth';
-import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import GoogleProvider from 'next-auth/providers/google';
-import GitHubProvider from 'next-auth/providers/github';
-import clientPromise from './mongodb-adapter';
-import bcrypt from 'bcryptjs';
-import User from '@/models/User';
-import dbConnect from './mongodb';
 
 export const authOptions: NextAuthOptions = {
-  adapter: undefined, // Disable adapter for now
   providers: [
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [
-      GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      })
-    ] : []),
-    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET ? [
-      GitHubProvider({
-        clientId: process.env.GITHUB_CLIENT_ID,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      })
-    ] : []),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -34,7 +14,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // For demo purposes, allow a test user
+        // Demo user for testing
         if (credentials.email === 'demo@genzplug.com' && credentials.password === 'demo123') {
           return {
             id: '1',
@@ -44,30 +24,8 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
-        try {
-          await dbConnect();
-          const user = await User.findOne({ email: credentials.email });
-
-          if (!user || !user.password) {
-            return null;
-          }
-
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-
-          if (!isPasswordValid) {
-            return null;
-          }
-
-          return {
-            id: user._id.toString(),
-            email: user.email,
-            name: user.name,
-            image: user.image,
-          };
-        } catch (error) {
-          console.error('Auth error:', error);
-          return null;
-        }
+        // For now, return null for other users
+        return null;
       }
     }),
   ],
@@ -88,5 +46,5 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
 };
