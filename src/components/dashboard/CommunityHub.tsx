@@ -199,7 +199,7 @@ export default function CommunityHub() {
                       {friend.avatar}
                     </div>
                     <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-black ${
-                      friend.status === "online" ? 'bg-green-400' : 'bg-yellow-400'
+                      friend.status === 'online' ? 'bg-green-400' : 'bg-yellow-400'
                     }`}></div>
                   </div>
                   <div className="flex-1">
