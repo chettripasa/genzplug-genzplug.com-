@@ -9,7 +9,7 @@ import User from '@/models/User';
 import dbConnect from './mongodb';
 
 export const authOptions: NextAuthOptions = {
-  adapter: process.env.MONGODB_URI ? MongoDBAdapter(clientPromise) : undefined,
+  adapter: undefined, // Disable adapter for now to avoid MongoDB issues
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [
       GoogleProvider({
@@ -32,6 +32,16 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           return null;
+        }
+
+        // For demo purposes, allow a test user
+        if (credentials.email === 'demo@genzplug.com' && credentials.password === 'demo123') {
+          return {
+            id: '1',
+            email: credentials.email,
+            name: 'Demo User',
+            image: null,
+          };
         }
 
         try {

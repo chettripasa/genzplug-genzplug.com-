@@ -23,6 +23,12 @@ async function dbConnect() {
     throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
   }
 
+  // Validate MongoDB URI format
+  if (!MONGODB_URI.startsWith('mongodb://') && !MONGODB_URI.startsWith('mongodb+srv://')) {
+    console.error('Invalid MongoDB URI format. Must start with mongodb:// or mongodb+srv://');
+    throw new Error('Invalid MongoDB URI format');
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
