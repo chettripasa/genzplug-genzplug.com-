@@ -1,21 +1,8 @@
 import { NextAuthOptions } from 'next-auth';
-import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import GoogleProvider from 'next-auth/providers/google';
-import clientPromise from './mongodb-adapter';
-import bcrypt from 'bcryptjs';
-import User from '@/models/User';
-import dbConnect from './mongodb';
 
 export const authOptions: NextAuthOptions = {
-  adapter: clientPromise ? MongoDBAdapter(clientPromise) : undefined,
   providers: [
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [
-      GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      })
-    ] : []),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -37,30 +24,8 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
-        try {
-          await dbConnect();
-          const user = await User.findOne({ email: credentials.email });
-
-          if (!user || !user.password) {
-            return null;
-          }
-
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-
-          if (!isPasswordValid) {
-            return null;
-          }
-
-          return {
-            id: user._id.toString(),
-            email: user.email,
-            name: user.name,
-            image: user.image,
-          };
-        } catch (error) {
-          console.error('Auth error:', error);
-          return null;
-        }
+        // For now, return null for other users
+        return null;
       }
     }),
   ],
