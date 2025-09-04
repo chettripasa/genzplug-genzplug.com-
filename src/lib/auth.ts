@@ -9,7 +9,7 @@ import User from '@/models/User';
 import dbConnect from './mongodb';
 
 export const authOptions: NextAuthOptions = {
-  adapter: undefined, // Disable adapter for now to avoid MongoDB issues
+  adapter: process.env.MONGODB_URI ? MongoDBAdapter(clientPromise) : undefined,
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [
       GoogleProvider({
