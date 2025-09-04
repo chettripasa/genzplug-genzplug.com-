@@ -1,53 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const sampleProducts = [
-  {
-    _id: '1',
-    name: 'Gaming Headset Pro',
-    description: 'High-quality gaming headset with noise cancellation and RGB lighting',
-    price: 129.99,
-    category: 'electronics',
-    images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop'],
-    createdAt: new Date().toISOString()
-  },
-  {
-    _id: '2',
-    name: 'RGB Gaming Mouse',
-    description: 'Precision gaming mouse with customizable RGB lighting and programmable buttons',
-    price: 89.99,
-    category: 'electronics',
-    images: ['https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=300&h=200&fit=crop'],
-    createdAt: new Date().toISOString()
-  },
-  {
-    _id: '3',
-    name: 'Mechanical Gaming Keyboard',
-    description: 'Premium mechanical keyboard with tactile switches and backlighting',
-    price: 149.99,
-    category: 'electronics',
-    images: ['https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=300&h=200&fit=crop'],
-    createdAt: new Date().toISOString()
-  }
-];
+import dbConnect from '@/lib/mongodb';
+import Product from '@/models/Product';
 
 export async function GET() {
   try {
-    return NextResponse.json(sampleProducts);
+    await dbConnect();
+    
+    const products = await Product.find({})
+      .sort({ createdAt: -1 })
+      .limit(50);
+    
+    return NextResponse.json(products);
   } catch (error) {
     console.error('Products API error:', error);
-    return NextResponse.json([]);
+    return NextResponse.json(
+      { error: 'Failed to fetch products' },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    await dbConnect();
+    
     const body = await request.json();
-    const newProduct = {
-      _id: Date.now().toString(),
-      ...body,
-      createdAt: new Date().toISOString()
-    };
-    return NextResponse.json(newProduct, { status: 201 });
+    
+    // Validate required fields
+    if (!body.name || !body.description || !body.price || !body.category) {
+      return NextResponse.json(
+        { error: 'Missing required fields: name, description, price, category' },
+        { status: 400 }
+      );
+    }
+    
+    const newProduct = new Product({
+      name: body.name,
+      description: body.description,
+      price: body.price,
+      currency: body.currency || 'USD',
+      images: body.images || [],
+      category: body.category,
+      inStock: body.inStock !== undefined ? body.inStock : true,
+      stockQuantity: body.stockQuantity || 0,
+      tags: body.tags || [],
+      featured: body.featured || false,
+      discountPercentage: body.discountPercentage,
+      originalPrice: body.originalPrice,
+      stripeProductId: body.stripeProductId,
+      stripePriceId: body.stripePriceId,
+    });
+    
+    const savedProduct = await newProduct.save();
+    
+    return NextResponse.json(savedProduct, { status: 201 });
   } catch (error) {
     console.error('Failed to create product:', error);
     return NextResponse.json(

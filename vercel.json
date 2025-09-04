@@ -11,7 +11,7 @@
     }
   },
   "env": {
-    "MONGODB_URI": "your_mongodb_uri_here",
+    "MONGODB_URI": "mongodb+srv://karkidsanjay:g8433O4649@genzplug.8hzeonl.mongodb.net/?retryWrites=true&w=majority&appName=genzplug",
     "STRIPE_PUBLISHABLE_KEY": "your_stripe_publishable_key_here",
     "STRIPE_SECRET_KEY": "your_stripe_secret_key_here"
   }
