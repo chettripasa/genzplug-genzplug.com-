@@ -108,7 +108,7 @@ export async function PUT(request: NextRequest) {
       comment.userLikes.push(username);
     } else if (action === 'unlike' && isLiked) {
       comment.likes -= 1;
-      comment.userLikes = comment.userLikes.filter(user => user !== username);
+      comment.userLikes = comment.userLikes.filter((user: string) => user !== username);
     }
 
     await comment.save();
