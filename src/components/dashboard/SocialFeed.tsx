@@ -3,8 +3,23 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 
+// Define the Post interface
+interface Post {
+  id: number;
+  user: string;
+  avatar: string;
+  content: string;
+  image: string | null;
+  likes: number;
+  comments: number;
+  shares: number;
+  time: string;
+  liked: boolean;
+  userLikes: string[];
+}
+
 // Enhanced demo data for social feed
-const socialFeedPosts = [
+const socialFeedPosts: Post[] = [
   {
     id: 1,
     user: "CyberGamer",
@@ -61,7 +76,7 @@ const socialFeedPosts = [
 
 export default function SocialFeed() {
   const { data: session } = useSession();
-  const [posts, setPosts] = useState(socialFeedPosts);
+  const [posts, setPosts] = useState<Post[]>(socialFeedPosts);
   const [newPost, setNewPost] = useState('');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [comments, setComments] = useState<{[key: number]: string[]}>({});
@@ -128,7 +143,7 @@ export default function SocialFeed() {
     e.preventDefault();
     if (!newPost.trim() || !session?.user) return;
 
-    const newPostObj = {
+    const newPostObj: Post = {
       id: Date.now(),
       user: session.user.name || 'Anonymous',
       avatar: '👤',
