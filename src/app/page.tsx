@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 // Client-only clock component to prevent hydration errors
 function Clock() {
@@ -96,6 +98,8 @@ const gamePreviews = [
 ];
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [activeChatIndex, setActiveChatIndex] = useState(0);
   const [typingText, setTypingText] = useState('');
   const [currentTypingIndex, setCurrentTypingIndex] = useState(0);
@@ -106,6 +110,13 @@ export default function Home() {
     "Join the neon revolution...",
     "Where technology meets community..."
   ];
+
+  // Redirect logged-in users to dashboard
+  useEffect(() => {
+    if (status === 'authenticated' && session) {
+      router.push('/dashboard');
+    }
+  }, [status, session, router]);
 
   useEffect(() => {
     const typingTimer = setInterval(() => {
@@ -138,6 +149,23 @@ export default function Home() {
 
     return () => clearInterval(typeTimer);
   }, [currentTypingIndex, typingTexts]);
+
+  // Show loading while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen gradient-bg-cyber flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-cyan-400 neon-glow-cyan">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if user is authenticated (will redirect to dashboard)
+  if (status === 'authenticated') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen gradient-bg-cyber relative overflow-hidden">
