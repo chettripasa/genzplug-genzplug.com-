@@ -1,5 +1,8 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import bcrypt from 'bcryptjs';
+import dbConnect from './mongodb';
+import User from '@/models/User';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -14,18 +17,51 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Demo user for testing
-        if (credentials.email === 'demo@genzplug.com' && credentials.password === 'demo123') {
-          return {
-            id: '1',
-            email: credentials.email,
-            name: 'Demo User',
-            image: null,
-          };
-        }
+        try {
+          await dbConnect();
+          
+          // Check for demo user first
+          if (credentials.email === 'demo@genzplug.com' && credentials.password === 'demo123') {
+            // Create or find demo user
+            let demoUser = await User.findOne({ email: 'demo@genzplug.com' });
+            if (!demoUser) {
+              demoUser = new User({
+                name: 'Demo User',
+                email: 'demo@genzplug.com',
+                password: await bcrypt.hash('demo123', 12),
+              });
+              await demoUser.save();
+            }
+            
+            return {
+              id: demoUser._id.toString(),
+              email: demoUser.email,
+              name: demoUser.name,
+              image: demoUser.image,
+            };
+          }
 
-        // For now, return null for other users
-        return null;
+          // Check database for other users
+          const user = await User.findOne({ email: credentials.email });
+          if (!user || !user.password) {
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+            image: user.image,
+          };
+        } catch (error) {
+          console.error('Auth error:', error);
+          return null;
+        }
       }
     }),
   ],

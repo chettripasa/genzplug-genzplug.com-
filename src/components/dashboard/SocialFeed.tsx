@@ -5,166 +5,199 @@ import { useSession } from 'next-auth/react';
 
 // Define the Post interface
 interface Post {
-  id: number;
-  user: string;
-  avatar: string;
+  _id: string;
+  userId: string;
+  username: string;
   content: string;
-  image: string | null;
+  image?: string;
   likes: number;
   comments: number;
   shares: number;
-  time: string;
-  liked: boolean;
   userLikes: string[];
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Enhanced demo data for social feed
-const socialFeedPosts: Post[] = [
-  {
-    id: 1,
-    user: "CyberGamer",
-    avatar: "🎮",
-    content: "Just finished an epic battle in Cyberpunk Arena! The new update is absolutely insane 🔥",
-    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=300&fit=crop",
-    likes: 1247,
-    comments: 89,
-    shares: 23,
-    time: "2m ago",
-    liked: false,
-    userLikes: []
-  },
-  {
-    id: 2,
-    user: "TechVision",
-    avatar: "👁️",
-    content: "The future of VR gaming is here! Check out this amazing setup I just built 🥽",
-    image: "https://images.unsplash.com/photo-1593508512255-86ab42a8e620?w=400&h=300&fit=crop",
-    likes: 892,
-    comments: 156,
-    shares: 45,
-    time: "15m ago",
-    liked: false,
-    userLikes: []
-  },
-  {
-    id: 3,
-    user: "NeonRider",
-    avatar: "🏍️",
-    content: "Racing through the digital neon streets! This game is everything I dreamed of 🏎️",
-    image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&h=300&fit=crop",
-    likes: 567,
-    comments: 43,
-    shares: 12,
-    time: "1h ago",
-    liked: false,
-    userLikes: []
-  },
-  {
-    id: 4,
-    user: "DigitalNomad",
-    avatar: "🌐",
-    content: "Exploring the metaverse with my new VR setup. The possibilities are endless! 🚀",
-    image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=300&fit=crop",
-    likes: 2341,
-    comments: 234,
-    shares: 89,
-    time: "3h ago",
-    liked: false,
-    userLikes: []
-  }
-];
+interface Comment {
+  _id: string;
+  postId: string;
+  userId: string;
+  username: string;
+  content: string;
+  likes: number;
+  userLikes: string[];
+  createdAt: string;
+}
 
 export default function SocialFeed() {
   const { data: session } = useSession();
-  const [posts, setPosts] = useState<Post[]>(socialFeedPosts);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const [comments, setComments] = useState<{[key: number]: string[]}>({});
+  const [comments, setComments] = useState<{[key: string]: Comment[]}>({});
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleLike = (postId: number) => {
-    setPosts(posts.map(post => {
-      if (post.id === postId) {
-        const isLiked = post.liked;
-        return {
-          ...post,
-          liked: !isLiked,
-          likes: isLiked ? post.likes - 1 : post.likes + 1,
-          userLikes: isLiked 
-            ? post.userLikes.filter(user => user !== session?.user?.name)
-            : [...post.userLikes, session?.user?.name || 'Anonymous']
-        };
+  // Fetch posts from API
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    try {
+      const response = await fetch('/api/posts');
+      if (response.ok) {
+        const data = await response.json();
+        setPosts(data);
       }
-      return post;
-    }));
-  };
-
-  const handleComment = (postId: number) => {
-    const commentText = prompt('Add a comment:');
-    if (commentText && commentText.trim()) {
-      setComments(prev => ({
-        ...prev,
-        [postId]: [...(prev[postId] || []), `${session?.user?.name || 'Anonymous'}: ${commentText.trim()}`]
-      }));
-      
-      // Update post comment count
-      setPosts(posts.map(post => 
-        post.id === postId 
-          ? { ...post, comments: post.comments + 1 }
-          : post
-      ));
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleShare = (postId: number) => {
-    const post = posts.find(p => p.id === postId);
+  const handleLike = async (postId: string) => {
+    if (!session?.user) return;
+
+    const post = posts.find(p => p._id === postId);
+    if (!post) return;
+
+    const username = session.user.name || 'Anonymous';
+    const isLiked = post.userLikes.includes(username);
+    const action = isLiked ? 'unlike' : 'like';
+
+    try {
+      const response = await fetch('/api/posts', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ postId, action }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setPosts(posts.map(p => 
+          p._id === postId 
+            ? { ...p, likes: result.likes, userLikes: result.userLikes }
+            : p
+        ));
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
+  };
+
+  const handleComment = async (postId: string) => {
+    const commentText = prompt('Add a comment:');
+    if (!commentText || !commentText.trim() || !session?.user) return;
+
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          postId, 
+          content: commentText.trim() 
+        }),
+      });
+
+      if (response.ok) {
+        const newComment = await response.json();
+        setComments(prev => ({
+          ...prev,
+          [postId]: [newComment, ...(prev[postId] || [])]
+        }));
+        
+        // Update post comment count
+        setPosts(posts.map(post => 
+          post._id === postId 
+            ? { ...post, comments: post.comments + 1 }
+            : post
+        ));
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
+  };
+
+  const handleShare = (postId: string) => {
+    const post = posts.find(p => p._id === postId);
     if (post) {
       if (navigator.share) {
         navigator.share({
-          title: `Post by ${post.user}`,
+          title: `Post by ${post.username}`,
           text: post.content,
           url: window.location.href
         });
       } else {
-        // Fallback: copy to clipboard
-        navigator.clipboard.writeText(`${post.content} - Posted by ${post.user} on GenZPlug`);
+        navigator.clipboard.writeText(`${post.content} - Posted by ${post.username} on GenZPlug`);
         alert('Post content copied to clipboard!');
       }
       
       // Update share count
       setPosts(posts.map(p => 
-        p.id === postId 
+        p._id === postId 
           ? { ...p, shares: p.shares + 1 }
           : p
       ));
     }
   };
 
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPost.trim() || !session?.user) return;
+    if (!newPost.trim() || !session?.user || submitting) return;
 
-    const newPostObj: Post = {
-      id: Date.now(),
-      user: session.user.name || 'Anonymous',
-      avatar: '👤',
-      content: newPost.trim(),
-      image: null,
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      time: 'Just now',
-      liked: false,
-      userLikes: []
-    };
+    setSubmitting(true);
+    try {
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          content: newPost.trim(),
+          tags: []
+        }),
+      });
 
-    setPosts([newPostObj, ...posts]);
-    setNewPost('');
-    setShowCreatePost(false);
+      if (response.ok) {
+        const newPostData = await response.json();
+        setPosts([newPostData, ...posts]);
+        setNewPost('');
+        setShowCreatePost(false);
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const formatTime = (timeStr: string) => {
-    return timeStr;
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
+
+  if (loading) {
+    return (
+      <div className="animate-fade-in-up">
+        <div className="flex items-center justify-center py-12">
+          <div className="w-16 h-16 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in-up">
@@ -205,10 +238,10 @@ export default function SocialFeed() {
               </span>
               <button
                 type="submit"
-                disabled={!newPost.trim()}
+                disabled={!newPost.trim() || submitting}
                 className="px-6 py-2 bg-gradient-to-r from-cyan-400 to-pink-500 text-black font-semibold rounded-lg hover:from-cyan-500 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
               >
-                Post
+                {submitting ? 'Posting...' : 'Post'}
               </button>
             </div>
           </form>
@@ -216,95 +249,103 @@ export default function SocialFeed() {
       )}
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {posts.map((post, index) => (
-          <div 
-            key={post.id} 
-            className="glass rounded-xl p-6 neon-border-cyan animate-slide-in hover:scale-105 transition-transform duration-300" 
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-cyan-400 to-pink-500 rounded-full flex items-center justify-center text-xl animate-pulse-slow">
-                {post.avatar}
-              </div>
-              <div className="ml-4">
-                <h3 className="font-semibold text-white neon-glow-cyan">{post.user}</h3>
-                <p className="text-sm text-gray-400">{formatTime(post.time)}</p>
-              </div>
-            </div>
-            
-            <p className="text-gray-300 mb-4 leading-relaxed">{post.content}</p>
-            
-            {post.image && (
-              <div className="relative mb-4 overflow-hidden rounded-lg">
-                <img 
-                  src={post.image} 
-                  alt="Post" 
-                  className="w-full h-48 object-cover hover:scale-110 transition-transform duration-300" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
-            )}
-            
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center space-x-6">
-                <button 
-                  onClick={() => handleLike(post.id)}
-                  className={`flex items-center space-x-2 transition-colors duration-200 group ${
-                    post.liked ? 'text-red-400' : 'hover:text-red-400'
-                  }`}
-                >
-                  <span className={`group-hover:scale-110 transition-transform duration-200 ${
-                    post.liked ? 'animate-pulse' : ''
-                  }`}>
-                    {post.liked ? '❤️' : '🤍'}
-                  </span>
-                  <span className={`transition-colors duration-200 ${
-                    post.liked ? 'text-red-400' : 'text-gray-400 group-hover:text-red-400'
-                  }`}>
-                    {post.likes.toLocaleString()}
-                  </span>
-                </button>
-                
-                <button 
-                  onClick={() => handleComment(post.id)}
-                  className="flex items-center space-x-2 hover:text-pink-400 transition-colors duration-200 group"
-                >
-                  <span className="group-hover:scale-110 transition-transform duration-200">💬</span>
-                  <span className="text-gray-400 group-hover:text-pink-400 transition-colors duration-200">
-                    {post.comments}
-                  </span>
-                </button>
-                
-                <button 
-                  onClick={() => handleShare(post.id)}
-                  className="flex items-center space-x-2 hover:text-green-400 transition-colors duration-200 group"
-                >
-                  <span className="group-hover:scale-110 transition-transform duration-200">📤</span>
-                  <span className="text-gray-400 group-hover:text-green-400 transition-colors duration-200">
-                    {post.shares}
-                  </span>
-                </button>
-              </div>
-              
-              <div className="text-xs text-gray-500">
-                <span className="animate-pulse-slow">●</span> Live
-              </div>
-            </div>
-
-            {/* Comments Section */}
-            {comments[post.id] && comments[post.id].length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-700">
-                <div className="space-y-2">
-                  {comments[post.id].map((comment, commentIndex) => (
-                    <div key={commentIndex} className="text-sm text-gray-300 bg-gray-800 rounded-lg p-3">
-                      {comment}
-                    </div>
-                  ))}
+        {posts.length === 0 ? (
+          <div className="col-span-2 text-center py-12">
+            <div className="text-6xl mb-4">📱</div>
+            <p className="text-xl text-gray-400">No posts yet</p>
+            <p className="text-sm text-gray-500">Be the first to share something!</p>
+          </div>
+        ) : (
+          posts.map((post, index) => (
+            <div 
+              key={post._id} 
+              className="glass rounded-xl p-6 neon-border-cyan animate-slide-in hover:scale-105 transition-transform duration-300" 
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-cyan-400 to-pink-500 rounded-full flex items-center justify-center text-xl animate-pulse-slow">
+                  {post.username.charAt(0).toUpperCase()}
+                </div>
+                <div className="ml-4">
+                  <h3 className="font-semibold text-white neon-glow-cyan">{post.username}</h3>
+                  <p className="text-sm text-gray-400">{formatTime(post.createdAt)}</p>
                 </div>
               </div>
-            )}
-          </div>
-        ))}
+              
+              <p className="text-gray-300 mb-4 leading-relaxed">{post.content}</p>
+              
+              {post.image && (
+                <div className="relative mb-4 overflow-hidden rounded-lg">
+                  <img 
+                    src={post.image} 
+                    alt="Post" 
+                    className="w-full h-48 object-cover hover:scale-110 transition-transform duration-300" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center space-x-6">
+                  <button 
+                    onClick={() => handleLike(post._id)}
+                    className={`flex items-center space-x-2 transition-colors duration-200 group ${
+                      post.userLikes.includes(session?.user?.name || '') ? 'text-red-400' : 'hover:text-red-400'
+                    }`}
+                  >
+                    <span className={`group-hover:scale-110 transition-transform duration-200 ${
+                      post.userLikes.includes(session?.user?.name || '') ? 'animate-pulse' : ''
+                    }`}>
+                      {post.userLikes.includes(session?.user?.name || '') ? '❤️' : '🤍'}
+                    </span>
+                    <span className={`transition-colors duration-200 ${
+                      post.userLikes.includes(session?.user?.name || '') ? 'text-red-400' : 'text-gray-400 group-hover:text-red-400'
+                    }`}>
+                      {post.likes.toLocaleString()}
+                    </span>
+                  </button>
+                  
+                  <button 
+                    onClick={() => handleComment(post._id)}
+                    className="flex items-center space-x-2 hover:text-pink-400 transition-colors duration-200 group"
+                  >
+                    <span className="group-hover:scale-110 transition-transform duration-200">💬</span>
+                    <span className="text-gray-400 group-hover:text-pink-400 transition-colors duration-200">
+                      {post.comments}
+                    </span>
+                  </button>
+                  
+                  <button 
+                    onClick={() => handleShare(post._id)}
+                    className="flex items-center space-x-2 hover:text-green-400 transition-colors duration-200 group"
+                  >
+                    <span className="group-hover:scale-110 transition-transform duration-200">📤</span>
+                    <span className="text-gray-400 group-hover:text-green-400 transition-colors duration-200">
+                      {post.shares}
+                    </span>
+                  </button>
+                </div>
+                
+                <div className="text-xs text-gray-500">
+                  <span className="animate-pulse-slow">●</span> Live
+                </div>
+              </div>
+
+              {/* Comments Section */}
+              {comments[post._id] && comments[post._id].length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-700">
+                  <div className="space-y-2">
+                    {comments[post._id].map((comment) => (
+                      <div key={comment._id} className="text-sm text-gray-300 bg-gray-800 rounded-lg p-3">
+                        <span className="font-semibold text-cyan-400">{comment.username}:</span> {comment.content}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
