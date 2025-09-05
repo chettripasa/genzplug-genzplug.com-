@@ -32,7 +32,8 @@ export default function SocialFeed() {
     createPost({
       userId: session.user.id || 'anonymous',
       username: session.user.name || 'Anonymous',
-      content: newPost.trim()
+      content: newPost.trim(),
+      userLikes: []
     });
 
     setNewPost('');

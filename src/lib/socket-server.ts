@@ -101,13 +101,14 @@ class SocketServer {
         socket.emit('social-feed-history', this.socialFeed);
       });
 
-      socket.on('new-post', (post: Omit<SocialPost, 'id' | 'timestamp' | 'likes' | 'comments'>) => {
+      socket.on('new-post', (post: Omit<SocialPost, 'id' | 'timestamp' | 'likes' | 'comments' | 'userLikes'>) => {
         const socialPost: SocialPost = {
           ...post,
           id: Math.random().toString(36).substr(2, 9),
           timestamp: new Date(),
           likes: 0,
-          comments: 0
+          comments: 0,
+          userLikes: []
         };
 
         this.socialFeed.unshift(socialPost);
