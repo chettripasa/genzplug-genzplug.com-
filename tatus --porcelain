@@ -1,0 +1,15 @@
+[1mdiff --git a/src/app/api/chat-rooms/route.ts b/src/app/api/chat-rooms/route.ts[m
+[1mindex 950e66a..cd65a45 100644[m
+[1m--- a/src/app/api/chat-rooms/route.ts[m
+[1m+++ b/src/app/api/chat-rooms/route.ts[m
+[36m@@ -114,8 +114,8 @@[m [mexport async function PUT(request: NextRequest) {[m
+         chatRoom.onlineMembers.push(username);[m
+       }[m
+     } else if (action === 'leave') {[m
+[31m-      chatRoom.members = chatRoom.members.filter(member => member !== username);[m
+[31m-      chatRoom.onlineMembers = chatRoom.onlineMembers.filter(member => member !== username);[m
+[32m+[m[32m      chatRoom.members = chatRoom.members.filter((member: string) => member !== username);[m
+[32m+[m[32m      chatRoom.onlineMembers = chatRoom.onlineMembers.filter((member: string) => member !== username);[m
+     }[m
+ [m
+     await chatRoom.save();[m

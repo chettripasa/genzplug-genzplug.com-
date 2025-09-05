@@ -114,8 +114,8 @@ export async function PUT(request: NextRequest) {
         chatRoom.onlineMembers.push(username);
       }
     } else if (action === 'leave') {
-      chatRoom.members = chatRoom.members.filter(member => member !== username);
-      chatRoom.onlineMembers = chatRoom.onlineMembers.filter(member => member !== username);
+      chatRoom.members = chatRoom.members.filter((member: string) => member !== username);
+      chatRoom.onlineMembers = chatRoom.onlineMembers.filter((member: string) => member !== username);
     }
 
     await chatRoom.save();
