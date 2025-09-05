@@ -31,9 +31,7 @@ interface GameEvent {
   roomId: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const io: any = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
 const Socket: any = null;
 
 interface SocketContextType {
