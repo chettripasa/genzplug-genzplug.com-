@@ -31,6 +31,7 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: '/auth/signin',
+    // Remove the signUp line
   },
   session: {
     strategy: 'jwt',
