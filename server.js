@@ -2,7 +2,6 @@ require('dotenv').config({ path: '.env.local' });
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
-const { socketServer } = require('./src/lib/socket-server.ts');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
@@ -23,10 +22,8 @@ app.prepare().then(() => {
     }
   });
 
-  // Initialize Socket.IO server
-  socketServer.initialize(server);
-
   server.listen(port, () => {
     console.log(`> Ready on http://${hostname}:${port}`);
+    console.log(`> Socket.IO server should be running separately on port 3001`);
   });
 });

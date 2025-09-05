@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "node server.js",
+    "dev:socket": "cd socket-server && npm run dev",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:socket\"",
     "build": "next build --turbopack",
     "start": "NODE_ENV=production node server.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "install:socket": "cd socket-server && npm install"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.10.0",
@@ -35,6 +38,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^8.2.2",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",

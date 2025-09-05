@@ -1,9 +1,9 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { io } from 'socket.io-client';
 
-// Temporarily disable socket functionality to fix build issues
-// Define interfaces locally to avoid socket-server import
+// Define interfaces locally
 interface ChatMessage {
   id: string;
   userId: string;
@@ -31,9 +31,6 @@ interface GameEvent {
   data?: Record<string, unknown>;
   roomId: string;
 }
-
-const io: any = null;
-const Socket: any = null;
 
 interface SocketContextType {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,27 +60,26 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Skip socket connection during build process or SSR
-    if (typeof window === 'undefined' || process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_APP_URL) {
-      return;
-    }
-    
-    // Skip if io is not available
-    if (!io) {
-      console.warn('Socket.IO not available, skipping socket connection');
+    if (typeof window === 'undefined') {
       return;
     }
     
     try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      // Get Socket.IO server URL from environment variables
+      const socketServerUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || 'http://localhost:3001';
       
       // Only create socket connection if we have a valid URL
-      if (!appUrl || appUrl === '') {
-        console.warn('NEXT_PUBLIC_APP_URL not defined, skipping socket connection');
+      if (!socketServerUrl || socketServerUrl === '') {
+        console.warn('NEXT_PUBLIC_SOCKET_SERVER_URL not defined, skipping socket connection');
         return;
       }
       
-      const socketInstance = io(appUrl, {
+      console.log(`Connecting to Socket.IO server: ${socketServerUrl}`);
+      
+      const socketInstance = io(socketServerUrl, {
         transports: ['websocket', 'polling'],
+        timeout: 20000,
+        forceNew: true
       });
 
     socketInstance.on('connect', () => {
