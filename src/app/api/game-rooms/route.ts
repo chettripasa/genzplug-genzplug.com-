@@ -115,7 +115,7 @@ export async function PUT(request: NextRequest) {
         gameRoom.currentPlayers += 1;
       }
     } else if (action === 'leave') {
-      gameRoom.players = gameRoom.players.filter(player => player !== username);
+      gameRoom.players = gameRoom.players.filter((player: string) => player !== username);
       gameRoom.currentPlayers = Math.max(0, gameRoom.currentPlayers - 1);
       
       // If host leaves, assign new host or close room
