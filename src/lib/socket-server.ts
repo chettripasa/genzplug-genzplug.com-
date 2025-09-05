@@ -30,6 +30,7 @@ export interface SocialPost {
   timestamp: Date;
   likes: number;
   comments: number;
+  userLikes: string[];
 }
 
 export interface GameEvent {

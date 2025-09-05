@@ -21,6 +21,7 @@ interface SocialPost {
   timestamp: Date;
   likes: number;
   comments: number;
+  userLikes: string[];
 }
 
 interface GameEvent {
