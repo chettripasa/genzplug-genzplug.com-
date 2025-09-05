@@ -26,10 +26,15 @@ export default function SignInPage() {
 
       if (result?.error) {
         setError('Invalid email or password');
-      } else {
+      } else if (result?.ok) {
+        // Successful login - redirect to dashboard
         router.push('/dashboard');
+        router.refresh(); // Force a refresh to update the session
+      } else {
+        setError('An unexpected error occurred');
       }
-    } catch {
+    } catch (error) {
+      console.error('Sign in error:', error);
       setError('An error occurred during sign in');
     } finally {
       setIsLoading(false);
