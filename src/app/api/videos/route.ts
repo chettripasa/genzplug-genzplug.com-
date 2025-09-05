@@ -105,7 +105,7 @@ export async function PUT(request: NextRequest) {
       video.userLikes.push(username);
     } else if (action === 'unlike' && isLiked) {
       video.likes -= 1;
-      video.userLikes = video.userLikes.filter(user => user !== username);
+      video.userLikes = video.userLikes.filter((user: string) => user !== username);
     }
 
     await video.save();
