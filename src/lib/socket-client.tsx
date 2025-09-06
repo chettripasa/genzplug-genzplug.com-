@@ -74,6 +74,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
                             process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || 
                             'http://localhost:3001';
       
+      // Debug environment variables
+      console.log('🔍 Socket.IO Environment Debug:', {
+        NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
+        NEXT_PUBLIC_SOCKET_SERVER_URL: process.env.NEXT_PUBLIC_SOCKET_SERVER_URL,
+        NODE_ENV: process.env.NODE_ENV,
+        selectedUrl: socketServerUrl
+      });
+      
       // Only create socket connection if we have a valid URL
       if (!socketServerUrl || socketServerUrl === '') {
         console.warn('⚠️ Socket server URL not defined, skipping socket connection');
