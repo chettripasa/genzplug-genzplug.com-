@@ -151,9 +151,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socketInstance.on('error', (error) => {
         console.error('❌ Socket.IO error:', {
           message: error.message,
-          description: error.description,
-          context: error.context,
-          type: error.type,
           timestamp: new Date().toISOString()
         });
         setConnectionStatus('error');
@@ -163,9 +160,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socketInstance.on('connect_error', (error) => {
         console.error('❌ Socket.IO connection error:', {
           message: error.message,
-          description: error.description,
-          context: error.context,
-          type: error.type,
           timestamp: new Date().toISOString()
         });
         setConnectionStatus('error');
