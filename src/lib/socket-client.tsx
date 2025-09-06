@@ -97,11 +97,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         upgrade: true,
         rememberUpgrade: true,
         // Better error handling
-        autoConnect: true,
-        // Compression
-        compression: true,
-        // Binary support
-        forceBase64: false
+        autoConnect: true
       });
 
       // Connection events
