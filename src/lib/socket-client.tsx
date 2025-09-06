@@ -72,7 +72,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       // Determine Socket.IO server URL based on environment
       let socketServerUrl;
       
-      if (process.env.NODE_ENV === 'production') {
+      // Check if we're in production by looking at the hostname
+      const isProduction = window.location.hostname === 'genzplug.com' || 
+                          window.location.hostname.includes('vercel.app') ||
+                          process.env.NODE_ENV === 'production';
+      
+      if (isProduction) {
         // Production: Use Railway Socket.IO server
         socketServerUrl = 'https://genzplug-socket.railway.app';
       } else {
@@ -85,8 +90,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
         NEXT_PUBLIC_SOCKET_SERVER_URL: process.env.NEXT_PUBLIC_SOCKET_SERVER_URL,
         NODE_ENV: process.env.NODE_ENV,
+        hostname: window.location.hostname,
         selectedUrl: socketServerUrl,
-        isProduction: process.env.NODE_ENV === 'production'
+        isProduction: isProduction,
+        detectionMethod: 'hostname-based'
       });
       
       // Only create socket connection if we have a valid URL
