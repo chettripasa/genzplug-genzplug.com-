@@ -52,7 +52,7 @@ export default function SignInPage() {
 
     try {
       // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
+      const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Sign in timeout')), 30000);
       });
 
@@ -107,7 +107,7 @@ export default function SignInPage() {
 
     try {
       // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
+      const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('OAuth sign in timeout')), 30000);
       });
 
