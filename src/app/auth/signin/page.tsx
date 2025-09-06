@@ -53,7 +53,7 @@ export default function SignInPage() {
     try {
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Sign in timeout')), 30000);
+        setTimeout(() => reject(new Error('Sign in timeout')), 20000);
       });
 
       const signInPromise = signIn('credentials', {
@@ -108,7 +108,7 @@ export default function SignInPage() {
     try {
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('OAuth sign in timeout')), 30000);
+        setTimeout(() => reject(new Error('OAuth sign in timeout')), 20000);
       });
 
       const signInPromise = signIn(provider, { callbackUrl: '/dashboard' });

@@ -20,8 +20,8 @@ export const authOptions: NextAuthOptions = {
         try {
           // Add timeout to database connection
           const dbConnectPromise = dbConnect();
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Database connection timeout')), 10000);
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Database connection timeout')), 15000);
           });
           
           await Promise.race([dbConnectPromise, timeoutPromise]);
@@ -49,8 +49,8 @@ export const authOptions: NextAuthOptions = {
 
           // Check database for other users with timeout
           const findUserPromise = User.findOne({ email: credentials.email });
-          const userTimeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('User lookup timeout')), 5000);
+          const userTimeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('User lookup timeout')), 8000);
           });
           
           const user = await Promise.race([findUserPromise, userTimeoutPromise]);
@@ -61,8 +61,8 @@ export const authOptions: NextAuthOptions = {
 
           // Password comparison with timeout
           const comparePromise = bcrypt.compare(credentials.password, user.password);
-          const compareTimeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Password comparison timeout')), 3000);
+          const compareTimeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Password comparison timeout')), 5000);
           });
           
           const isPasswordValid = await Promise.race([comparePromise, compareTimeoutPromise]);
