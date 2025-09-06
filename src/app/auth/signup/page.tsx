@@ -1,10 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 
 export default function SignUpPage() {
+  // Protection against Chrome extension interference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Add isCheckout property to prevent Chrome extension errors
+      (window as any).isCheckout = false;
+      
+      // Add error handling for Chrome extension messages
+      const handleError = (event: ErrorEvent) => {
+        if (event.message && event.message.includes('isCheckout')) {
+          console.warn('Chrome extension error intercepted:', event.message);
+          event.preventDefault();
+          return false;
+        }
+      };
+      
+      window.addEventListener('error', handleError);
+      
+      // Cleanup
+      return () => {
+        window.removeEventListener('error', handleError);
+      };
+    }
+  }, []);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,28 +56,52 @@ export default function SignUpPage() {
     }
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ name, email, password }),
+        signal: controller.signal,
       });
 
-      const data = await response.json();
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
-        setError(data.error || 'Failed to create account');
+        if (response.status === 504) {
+          setError('Server timeout. Please try again in a moment.');
+        } else if (response.status === 500) {
+          setError('Server error. Please try again later.');
+        } else {
+          try {
+            const data = await response.json();
+            setError(data.error || 'Failed to create account');
+          } catch {
+            setError('Failed to create account. Please try again.');
+          }
+        }
       } else {
-        setSuccess('Account created successfully! You can now sign in.');
-        // Clear form
-        setName('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
+        try {
+          const data = await response.json();
+          setSuccess('Account created successfully! You can now sign in.');
+          // Clear form
+          setName('');
+          setEmail('');
+          setPassword('');
+          setConfirmPassword('');
+        } catch {
+          setSuccess('Account created successfully! You can now sign in.');
+        }
       }
-    } catch {
-      setError('An error occurred during registration');
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        setError('Request timeout. Please check your connection and try again.');
+      } else {
+        setError('An error occurred during registration. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
