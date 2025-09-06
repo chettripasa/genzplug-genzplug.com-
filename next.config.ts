@@ -10,8 +10,8 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://genzplug-socket.railway.app https://*.railway.app",
-              "connect-src 'self' https://genzplug-socket.railway.app https://*.railway.app wss://genzplug-socket.railway.app wss://*.railway.app ws://genzplug-socket.railway.app ws://*.railway.app ws://localhost:3001 wss://localhost:3001",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://genzplug-socket.railway.app https://*.railway.app https://vercel.live https://*.vercel.live",
+              "connect-src 'self' https://genzplug-socket.railway.app https://*.railway.app https://vercel.live https://*.vercel.live wss://genzplug-socket.railway.app wss://*.railway.app ws://genzplug-socket.railway.app ws://*.railway.app ws://localhost:3001 wss://localhost:3001",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
