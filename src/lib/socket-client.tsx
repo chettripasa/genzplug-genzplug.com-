@@ -61,7 +61,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [socialFeed, setSocialFeed] = useState<SocialPost[]>([]);
   const [gameEvents, setGameEvents] = useState<GameEvent[]>([]);
 
-  // Connection manager function
+  // Connection manager function with enhanced error handling
   const createSocketConnection = () => {
     // Skip socket connection during build process or SSR
     if (typeof window === 'undefined') {
@@ -69,12 +69,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      // Get Socket.IO server URL from environment variables
-      const socketServerUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
+      // Get Socket.IO server URL from environment variables with fallbacks
+      const socketServerUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 
+                            process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || 
+                            'http://localhost:3001';
       
       // Only create socket connection if we have a valid URL
       if (!socketServerUrl || socketServerUrl === '') {
-        console.warn('⚠️ NEXT_PUBLIC_SOCKET_URL not defined, skipping socket connection');
+        console.warn('⚠️ Socket server URL not defined, skipping socket connection');
         setConnectionStatus('error');
         return null;
       }
@@ -87,9 +89,20 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         timeout: 20000,
         forceNew: true,
         reconnection: true,
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 10, // Increased attempts
         reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000
+        reconnectionDelayMax: 10000, // Increased max delay
+        reconnectionBackoff: true, // Enable exponential backoff
+        randomizationFactor: 0.5, // Add randomization to prevent thundering herd
+        // Enhanced connection options
+        upgrade: true,
+        rememberUpgrade: true,
+        // Better error handling
+        autoConnect: true,
+        // Compression
+        compression: true,
+        // Binary support
+        forceBase64: false
       });
 
       // Connection events
@@ -132,12 +145,44 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socketInstance.on('reconnect_failed', () => {
         console.error('❌ Reconnection failed after maximum attempts');
         setConnectionStatus('error');
+        // Attempt manual reconnection after a delay
+        setTimeout(() => {
+          console.log('🔄 Attempting manual reconnection...');
+          reconnect();
+        }, 30000); // 30 seconds delay
       });
 
-      // Error handling
+      // Enhanced error handling
       socketInstance.on('error', (error) => {
-        console.error('❌ Socket.IO error:', error);
+        console.error('❌ Socket.IO error:', {
+          message: error.message,
+          description: error.description,
+          context: error.context,
+          type: error.type,
+          timestamp: new Date().toISOString()
+        });
         setConnectionStatus('error');
+      });
+
+      // Add transport-level error handling
+      socketInstance.on('connect_error', (error) => {
+        console.error('❌ Socket.IO connection error:', {
+          message: error.message,
+          description: error.description,
+          context: error.context,
+          type: error.type,
+          timestamp: new Date().toISOString()
+        });
+        setConnectionStatus('error');
+      });
+
+      // Monitor connection quality
+      socketInstance.on('ping', () => {
+        console.log('🏓 Socket ping received');
+      });
+
+      socketInstance.on('pong', (latency) => {
+        console.log(`🏓 Socket pong received, latency: ${latency}ms`);
       });
 
       // Chat events

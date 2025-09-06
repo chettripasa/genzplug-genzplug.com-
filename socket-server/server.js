@@ -48,7 +48,7 @@ app.get('/health', (req, res) => {
   }
 });
 
-// Socket.IO server setup
+// Socket.IO server setup with enhanced configuration
 const io = new Server(server, {
   cors: {
     origin: process.env.ALLOWED_ORIGINS?.split(',') || [
@@ -57,22 +57,87 @@ const io = new Server(server, {
       'https://genzplug.vercel.app'
     ],
     methods: ['GET', 'POST'],
-    credentials: true
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
   },
   transports: ['websocket', 'polling'],
   pingTimeout: 60000,
   pingInterval: 25000,
   upgradeTimeout: 10000,
-  allowEIO3: true
+  allowEIO3: true,
+  // Enhanced connection settings
+  connectTimeout: 45000,
+  // Enable compression
+  compression: true,
+  // Enable per-message deflate
+  perMessageDeflate: {
+    threshold: 1024,
+    concurrencyLimit: 10,
+    memLevel: 7
+  },
+  // Connection state recovery
+  allowUpgrades: true,
+  // Max HTTP buffer size
+  maxHttpBufferSize: 1e6,
+  // Enable binary support
+  serveClient: false
 });
 
-// Enhanced Socket.IO logging
+// Enhanced Socket.IO logging and error handling
 io.engine.on('connection_error', (err) => {
-  console.error('❌ Socket.IO connection error:', err);
+  console.error('❌ Socket.IO connection error:', {
+    message: err.message,
+    description: err.description,
+    context: err.context,
+    type: err.type,
+    timestamp: new Date().toISOString()
+  });
 });
 
 io.on('connect_error', (err) => {
-  console.error('❌ Socket.IO connect error:', err);
+  console.error('❌ Socket.IO connect error:', {
+    message: err.message,
+    description: err.description,
+    context: err.context,
+    type: err.type,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Add connection rate limiting
+const connectionCounts = new Map();
+const MAX_CONNECTIONS_PER_IP = 10;
+const CONNECTION_WINDOW = 60000; // 1 minute
+
+io.engine.on('connection', (socket) => {
+  // Get client IP with fallback for different Socket.IO versions
+  const clientIP = socket.handshake?.address || 
+                   socket.conn?.remoteAddress || 
+                   socket.request?.connection?.remoteAddress ||
+                   socket.request?.socket?.remoteAddress ||
+                   'unknown';
+  
+  const now = Date.now();
+  
+  // Clean old entries
+  if (connectionCounts.has(clientIP)) {
+    const connections = connectionCounts.get(clientIP);
+    connectionCounts.set(clientIP, connections.filter(time => now - time < CONNECTION_WINDOW));
+  }
+  
+  // Check rate limit
+  const currentConnections = connectionCounts.get(clientIP) || [];
+  if (currentConnections.length >= MAX_CONNECTIONS_PER_IP) {
+    console.warn(`⚠️ Rate limit exceeded for IP: ${clientIP}`);
+    socket.close();
+    return;
+  }
+  
+  // Add current connection
+  currentConnections.push(now);
+  connectionCounts.set(clientIP, currentConnections);
+  
+  console.log(`📊 Connection stats - IP: ${clientIP}, Active connections: ${currentConnections.length}`);
 });
 
 // In-memory storage (in production, consider using Redis)
