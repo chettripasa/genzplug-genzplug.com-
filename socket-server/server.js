@@ -44,7 +44,7 @@ app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-    "connect-src 'self' https://genzplug.com https://genzplug.vercel.app wss://genzplug-socket.railway.app",
+    "connect-src 'self' https://genzplug.com https://genzplug.vercel.app wss://genzplug-socket.railway.app ws://genzplug-socket.railway.app",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https:",
     "font-src 'self' data:",
