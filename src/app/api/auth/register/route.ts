@@ -6,7 +6,28 @@ import User from '@/models/User';
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const { name, email, password } = await request.json();
+    
+    // Parse JSON with error handling
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return NextResponse.json(
+        { error: 'Invalid JSON format' },
+        { status: 400 }
+      );
+    }
+    
+    const { name, email, password } = body;
+    
+    // Validate required fields
+    if (!name || !email || !password) {
+      return NextResponse.json(
+        { error: 'Missing required fields: name, email, password' },
+        { status: 400 }
+      );
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });

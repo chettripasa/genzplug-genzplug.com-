@@ -46,8 +46,27 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    // Parse JSON with error handling
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return NextResponse.json(
+        { error: 'Invalid JSON format' },
+        { status: 400 }
+      );
+    }
+    
     const { name, email } = body;
+    
+    // Validate required fields
+    if (!name || !email) {
+      return NextResponse.json(
+        { error: 'Missing required fields: name, email' },
+        { status: 400 }
+      );
+    }
 
     await dbConnect();
     const user = await User.findByIdAndUpdate(
