@@ -3,7 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSocket } from '@/lib/socket-client';
-import { GameEvent } from '@/lib/socket-server';
+
+// Define GameEvent interface locally since socket-server was removed
+interface GameEvent {
+  type: 'join' | 'leave' | 'move' | 'action';
+  userId: string;
+  username: string;
+  data?: Record<string, unknown>;
+  roomId: string;
+}
 
 interface GameRoomProps {
   roomId: string;

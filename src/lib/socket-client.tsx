@@ -33,7 +33,6 @@ interface GameEvent {
 }
 
 interface SocketContextType {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   socket: any | null;
   isConnected: boolean;
   connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -54,7 +53,6 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export function SocketProvider({ children }: { children: ReactNode }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [socket, setSocket] = useState<any | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
@@ -91,8 +89,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        maxReconnectionAttempts: 5
+        reconnectionDelayMax: 5000
       });
 
       // Connection events
