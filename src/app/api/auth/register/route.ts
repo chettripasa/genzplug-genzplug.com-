@@ -4,8 +4,12 @@ import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
 export async function POST(request: NextRequest) {
+  console.log('📝 Registration attempt started');
+  
   try {
+    console.log('🔌 Connecting to database...');
     await dbConnect();
+    console.log('✅ Database connected successfully');
     
     // Parse JSON with comprehensive error handling
     let body;
@@ -46,6 +50,7 @@ export async function POST(request: NextRequest) {
     }
     
     const { name, email, password } = body;
+    console.log('📋 Registration data received:', { name: name?.substring(0, 10) + '...', email });
     
     // Validate required fields with detailed error messages
     const validationErrors = [];
@@ -71,8 +76,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
+    console.log('🔍 Checking if user already exists...');
     const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
+      console.log('❌ User already exists:', email);
       return NextResponse.json(
         { 
           error: 'User already exists with this email address',
@@ -81,13 +88,16 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
+    console.log('✅ User does not exist, proceeding with registration');
 
     // Hash password with error handling
+    console.log('🔐 Hashing password...');
     let hashedPassword;
     try {
       hashedPassword = await bcrypt.hash(password.trim(), 12);
+      console.log('✅ Password hashed successfully');
     } catch (hashError) {
-      console.error('Password hashing error:', hashError);
+      console.error('❌ Password hashing error:', hashError);
       return NextResponse.json(
         { 
           error: 'Failed to process password',
@@ -98,6 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user with error handling
+    console.log('👤 Creating user account...');
     let user;
     try {
       user = await User.create({
@@ -105,8 +116,9 @@ export async function POST(request: NextRequest) {
         email: email.toLowerCase().trim(),
         password: hashedPassword,
       });
+      console.log('✅ User created successfully:', user._id);
     } catch (createError) {
-      console.error('User creation error:', createError);
+      console.error('❌ User creation error:', createError);
       return NextResponse.json(
         { 
           error: 'Failed to create user account',
@@ -120,6 +132,7 @@ export async function POST(request: NextRequest) {
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user.toObject();
 
+    console.log('🎉 Registration completed successfully');
     return NextResponse.json(
       {
         message: 'User registered successfully',
@@ -128,7 +141,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('❌ Registration error:', error);
     return NextResponse.json(
       { 
         error: 'Internal server error during registration',
