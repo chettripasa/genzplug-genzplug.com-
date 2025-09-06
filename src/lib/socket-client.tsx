@@ -80,6 +80,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       if (isProduction) {
         // Production: Use Railway Socket.IO server
         socketServerUrl = 'https://genzplug-socket.railway.app';
+        
+        // Temporary: Disable Socket.IO in production until Railway server is fixed
+        console.warn('⚠️ Socket.IO temporarily disabled in production - Railway server not accessible');
+        console.log('🔧 To enable Socket.IO: Fix Railway server deployment and remove this warning');
+        setConnectionStatus('error');
+        return null;
       } else {
         // Development: Use localhost
         socketServerUrl = 'http://localhost:3001';
