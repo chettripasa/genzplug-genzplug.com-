@@ -1,11 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function SignInPage() {
+  // Protection against Chrome extension interference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Add isCheckout property to prevent Chrome extension errors
+      (window as any).isCheckout = false;
+      
+      // Add error handling for Chrome extension messages
+      const handleError = (event: ErrorEvent) => {
+        if (event.message && event.message.includes('isCheckout')) {
+          console.warn('Chrome extension error intercepted:', event.message);
+          event.preventDefault();
+          return false;
+        }
+      };
+      
+      const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+        if (event.reason && event.reason.message && event.reason.message.includes('isCheckout')) {
+          console.warn('Chrome extension promise rejection intercepted:', event.reason.message);
+          event.preventDefault();
+          return false;
+        }
+      };
+      
+      window.addEventListener('error', handleError);
+      window.addEventListener('unhandledrejection', handleUnhandledRejection);
+      
+      // Cleanup
+      return () => {
+        window.removeEventListener('error', handleError);
+        window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      };
+    }
+  }, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,14 +51,30 @@ export default function SignInPage() {
     setError('');
 
     try {
-      const result = await signIn('credentials', {
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Sign in timeout')), 30000);
+      });
+
+      const signInPromise = signIn('credentials', {
         email,
         password,
         redirect: false,
       });
 
+      const result = await Promise.race([signInPromise, timeoutPromise]);
+
       if (result?.error) {
-        setError('Invalid email or password');
+        // Handle different error types
+        if (result.error === 'CredentialsSignin') {
+          setError('Invalid email or password');
+        } else if (result.error === 'CallbackRouteError') {
+          setError('Server error. Please try again later.');
+        } else if (result.error.includes('timeout')) {
+          setError('Request timeout. Please check your connection and try again.');
+        } else {
+          setError('Sign in failed. Please try again.');
+        }
       } else if (result?.ok) {
         // Successful login - redirect to dashboard
         router.push('/dashboard');
@@ -35,7 +84,18 @@ export default function SignInPage() {
       }
     } catch (error) {
       console.error('Sign in error:', error);
-      setError('An error occurred during sign in');
+      
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          setError('Request timeout. Please check your connection and try again.');
+        } else if (error.message.includes('JSON')) {
+          setError('Server error. Please try again later.');
+        } else {
+          setError('An error occurred during sign in. Please try again.');
+        }
+      } else {
+        setError('An error occurred during sign in. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -46,9 +106,26 @@ export default function SignInPage() {
     setError('');
 
     try {
-      await signIn(provider, { callbackUrl: '/dashboard' });
-    } catch {
-      setError('An error occurred during sign in');
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('OAuth sign in timeout')), 30000);
+      });
+
+      const signInPromise = signIn(provider, { callbackUrl: '/dashboard' });
+
+      await Promise.race([signInPromise, timeoutPromise]);
+    } catch (error) {
+      console.error('OAuth sign in error:', error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          setError('Request timeout. Please check your connection and try again.');
+        } else {
+          setError('An error occurred during sign in. Please try again.');
+        }
+      } else {
+        setError('An error occurred during sign in. Please try again.');
+      }
       setIsLoading(false);
     }
   };

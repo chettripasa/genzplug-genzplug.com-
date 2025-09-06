@@ -14,11 +14,17 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error('Missing credentials');
         }
 
         try {
-          await dbConnect();
+          // Add timeout to database connection
+          const dbConnectPromise = dbConnect();
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Database connection timeout')), 10000);
+          });
+          
+          await Promise.race([dbConnectPromise, timeoutPromise]);
           
           // Check for demo user first
           if (credentials.email === 'demo@genzplug.com' && credentials.password === 'demo123') {
@@ -41,15 +47,28 @@ export const authOptions: NextAuthOptions = {
             };
           }
 
-          // Check database for other users
-          const user = await User.findOne({ email: credentials.email });
+          // Check database for other users with timeout
+          const findUserPromise = User.findOne({ email: credentials.email });
+          const userTimeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('User lookup timeout')), 5000);
+          });
+          
+          const user = await Promise.race([findUserPromise, userTimeoutPromise]);
+          
           if (!user || !user.password) {
-            return null;
+            throw new Error('Invalid credentials');
           }
 
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+          // Password comparison with timeout
+          const comparePromise = bcrypt.compare(credentials.password, user.password);
+          const compareTimeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Password comparison timeout')), 3000);
+          });
+          
+          const isPasswordValid = await Promise.race([comparePromise, compareTimeoutPromise]);
+          
           if (!isPasswordValid) {
-            return null;
+            throw new Error('Invalid credentials');
           }
 
           return {
@@ -60,7 +79,19 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (error) {
           console.error('Auth error:', error);
-          return null;
+          
+          // Return specific error messages for different error types
+          if (error instanceof Error) {
+            if (error.message.includes('timeout')) {
+              throw new Error('Authentication timeout. Please try again.');
+            } else if (error.message.includes('Invalid credentials')) {
+              throw new Error('Invalid email or password');
+            } else {
+              throw new Error('Authentication failed. Please try again.');
+            }
+          }
+          
+          throw new Error('Authentication failed. Please try again.');
         }
       }
     }),
