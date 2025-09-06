@@ -19,8 +19,8 @@ if (!cached) {
 
 async function dbConnect() {
   if (!MONGODB_URI) {
-    console.warn('MONGODB_URI is not defined. Database connection will not be available.');
-    throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+    console.error('MONGODB_URI is not defined. Database connection will not be available.');
+    throw new Error('Please define the MONGODB_URI environment variable inside .env.local. For local development, you can use MongoDB Atlas (free tier) or install MongoDB locally.');
   }
 
   // Validate MongoDB URI format
