@@ -92,7 +92,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         reconnectionAttempts: 10, // Increased attempts
         reconnectionDelay: 1000,
         reconnectionDelayMax: 10000, // Increased max delay
-        reconnectionBackoff: true, // Enable exponential backoff
         randomizationFactor: 0.5, // Add randomization to prevent thundering herd
         // Enhanced connection options
         upgrade: true,
