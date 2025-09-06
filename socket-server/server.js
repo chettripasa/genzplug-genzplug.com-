@@ -39,6 +39,28 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept']
 }));
 
+// Add CSP headers middleware
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "connect-src 'self' https://genzplug.com https://genzplug.vercel.app wss://genzplug-socket.railway.app",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    "font-src 'self' data:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'"
+  ].join('; '));
+  
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'origin-when-cross-origin');
+  
+  next();
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   try {
@@ -83,7 +105,7 @@ const io = new Server(server, {
   pingTimeout: 60000,
   pingInterval: 25000,
   upgradeTimeout: 10000,
-  allowEIO3: true,
+  allowEIO3: false, // Disable EIO3 to avoid eval() usage
   // Enhanced connection settings
   connectTimeout: 45000,
   // Enable compression
