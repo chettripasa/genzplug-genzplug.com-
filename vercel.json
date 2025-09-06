@@ -20,5 +20,13 @@
     "STRIPE_PUBLISHABLE_KEY": "pk_live_your_stripe_publishable_key_here",
     "STRIPE_SECRET_KEY": "sk_live_your_stripe_secret_key_here",
     "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_SOCKET_URL": "https://genzplug-socket.railway.app",
+      "NEXT_PUBLIC_SOCKET_SERVER_URL": "https://genzplug-socket.railway.app",
+      "NEXT_PUBLIC_APP_URL": "https://genzplug.com",
+      "NODE_ENV": "production"
+    }
   }
 }

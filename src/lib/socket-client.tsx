@@ -69,17 +69,24 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      // Get Socket.IO server URL from environment variables with fallbacks
-      const socketServerUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 
-                            process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || 
-                            'http://localhost:3001';
+      // Determine Socket.IO server URL based on environment
+      let socketServerUrl;
+      
+      if (process.env.NODE_ENV === 'production') {
+        // Production: Use Railway Socket.IO server
+        socketServerUrl = 'https://genzplug-socket.railway.app';
+      } else {
+        // Development: Use localhost
+        socketServerUrl = 'http://localhost:3001';
+      }
       
       // Debug environment variables
       console.log('🔍 Socket.IO Environment Debug:', {
         NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
         NEXT_PUBLIC_SOCKET_SERVER_URL: process.env.NEXT_PUBLIC_SOCKET_SERVER_URL,
         NODE_ENV: process.env.NODE_ENV,
-        selectedUrl: socketServerUrl
+        selectedUrl: socketServerUrl,
+        isProduction: process.env.NODE_ENV === 'production'
       });
       
       // Only create socket connection if we have a valid URL
