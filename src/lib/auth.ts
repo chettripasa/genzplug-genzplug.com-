@@ -13,8 +13,11 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
+        console.log('🔐 Authorization attempt for:', credentials?.email);
+        
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('Missing credentials');
+          console.log('❌ Missing credentials');
+          return null;
         }
 
         try {
@@ -28,9 +31,11 @@ export const authOptions: NextAuthOptions = {
           
           // Check for demo user first
           if (credentials.email === 'demo@genzplug.com' && credentials.password === 'demo123') {
+            console.log('🎮 Demo user login attempt');
             // Create or find demo user
             let demoUser = await User.findOne({ email: 'demo@genzplug.com' });
             if (!demoUser) {
+              console.log('📝 Creating new demo user');
               demoUser = new User({
                 name: 'Demo User',
                 email: 'demo@genzplug.com',
@@ -39,6 +44,7 @@ export const authOptions: NextAuthOptions = {
               await demoUser.save();
             }
             
+            console.log('✅ Demo user authenticated successfully');
             return {
               id: demoUser._id.toString(),
               email: demoUser.email,
@@ -56,8 +62,11 @@ export const authOptions: NextAuthOptions = {
           const user = await Promise.race([findUserPromise, userTimeoutPromise]);
           
           if (!user || !user.password) {
-            throw new Error('Invalid credentials');
+            console.log('❌ User not found or no password set');
+            return null;
           }
+
+          console.log('👤 User found, checking password');
 
           // Password comparison with timeout
           const comparePromise = bcrypt.compare(credentials.password, user.password);
@@ -68,9 +77,11 @@ export const authOptions: NextAuthOptions = {
           const isPasswordValid = await Promise.race([comparePromise, compareTimeoutPromise]);
           
           if (!isPasswordValid) {
-            throw new Error('Invalid credentials');
+            console.log('❌ Invalid password');
+            return null;
           }
 
+          console.log('✅ User authenticated successfully');
           return {
             id: user._id.toString(),
             email: user.email,
@@ -80,18 +91,23 @@ export const authOptions: NextAuthOptions = {
         } catch (error) {
           console.error('Auth error:', error);
           
-          // Return specific error messages for different error types
+          // For NextAuth credentials provider, we should return null for invalid credentials
+          // instead of throwing errors, as throwing causes 401 responses
           if (error instanceof Error) {
             if (error.message.includes('timeout')) {
-              throw new Error('Authentication timeout. Please try again.');
+              console.error('Authentication timeout:', error.message);
+              return null; // Return null for timeout to show generic error
             } else if (error.message.includes('Invalid credentials')) {
-              throw new Error('Invalid email or password');
+              console.error('Invalid credentials:', error.message);
+              return null; // Return null for invalid credentials
             } else {
-              throw new Error('Authentication failed. Please try again.');
+              console.error('Authentication failed:', error.message);
+              return null; // Return null for other errors
             }
           }
           
-          throw new Error('Authentication failed. Please try again.');
+          console.error('Unknown authentication error:', error);
+          return null; // Return null for unknown errors
         }
       }
     }),

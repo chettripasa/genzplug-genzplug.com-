@@ -79,6 +79,9 @@ export default function SignInPage() {
         // Successful login - redirect to dashboard
         router.push('/dashboard');
         router.refresh(); // Force a refresh to update the session
+      } else if (result === null) {
+        // Authentication returned null (invalid credentials or error)
+        setError('Invalid email or password');
       } else {
         setError('An unexpected error occurred');
       }
