@@ -13,10 +13,12 @@
   "env": {
     "MONGODB_URI": "mongodb+srv://karkidsanjay:g8433O4649@genzplug.8hzeonl.mongodb.net/?retryWrites=true&w=majority&appName=genzplug",
     "NEXTAUTH_URL": "https://genzplug.com",
-    "NEXTAUTH_SECRET": "your-nextauth-secret-key-here",
+    "NEXTAUTH_SECRET": "genzplug-production-secret-key-2024-secure-random-string",
     "NEXT_PUBLIC_APP_URL": "https://genzplug.com",
+    "NEXT_PUBLIC_SOCKET_URL": "https://genzplug-socket.railway.app",
     "NEXT_PUBLIC_SOCKET_SERVER_URL": "https://genzplug-socket.railway.app",
-    "STRIPE_PUBLISHABLE_KEY": "your_stripe_publishable_key_here",
-    "STRIPE_SECRET_KEY": "your_stripe_secret_key_here"
+    "STRIPE_PUBLISHABLE_KEY": "pk_live_your_stripe_publishable_key_here",
+    "STRIPE_SECRET_KEY": "sk_live_your_stripe_secret_key_here",
+    "NODE_ENV": "production"
   }
 }
