@@ -99,15 +99,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         // Better error handling
         autoConnect: true,
         // CSP-compliant configuration
-        allowEIO3: false, // Disable Engine.IO v3 compatibility to avoid eval
         // Use secure transport only in production
         secure: process.env.NODE_ENV === 'production',
         // Additional CSP-friendly options
         withCredentials: true,
         // Disable features that might use eval
-        forceBase64: false,
-        // Use binary transport to avoid string evaluation
-        forceNew: true
+        forceBase64: false
       });
 
       // Connection events
